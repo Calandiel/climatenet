@@ -1,6 +1,7 @@
 # input and output files
 data/
 checkpoints/
+output/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
