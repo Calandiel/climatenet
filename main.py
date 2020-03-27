@@ -121,6 +121,6 @@ model = get_model()
 if len(data_by_days) >= 2:
     generator = DataGenerator(data_by_days)
     print("Generator len: " + str(len(generator)))
-    model.fit(generator)#, callbacks=[g.CP_CALLBACK])
+    model.fit(generator, callbacks=[g.CP_CALLBACK])
 else:
     print("NOT ENOUGH GRIB FILES FOR ACTUAL LEARNING!")
