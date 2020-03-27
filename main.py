@@ -37,7 +37,7 @@ def print_band_identifier(ttl, data = None, used = True):
     
 def get_input_dimensions(nparrays):
     size = g.RADIUS * 2 + 1
-    return size * size * len(nparrays) + 2 # + 2 at the end for "y" and "time
+    return size * size * len(nparrays) + 4 # x, y, day, time
 def get_output_dimensions(nparrays):
     return len(nparrays)
 

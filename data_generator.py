@@ -55,6 +55,13 @@ def construct_input(nparrays, data_array,
             
                 data_array[i] = layer[yy, xx]
                 i += 1
+    data_array[i] = x
+    i += 1
+    data_array[i] = y
+    i += 1
+    data_array[i] = day
+    i += 1
+    data_array[i] = time
 def construct_output(nparrays, data_array, x, y):
     dim_x, dim_y = nparrays[0].shape
     for i in range(len(nparrays)):
