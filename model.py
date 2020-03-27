@@ -16,7 +16,7 @@ def get_model():
     checkpoint_path = os.path.join(pathlib.Path(__file__).parent.absolute(), "checkpoints")
     #checkpoint_path = os.path.join(checkpoint_path, 'climate.nn')
     g.CP_CALLBACK = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
-                                                 verbose=10,
+                                                 verbose=0,
                                                  save_freq=50)
     model.compile(optimizer='adam',
                   loss='mean_squared_error',
