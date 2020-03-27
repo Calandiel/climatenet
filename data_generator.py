@@ -9,7 +9,7 @@ class DataGenerator(tf.keras.utils.Sequence):
     def __init__(self, data, batch_size = 32):
         self.data, self.batch_size = data, batch_size
     def __len__(self):
-        total = g.GLOBAL_MAP_DIMENSIONS[0] * g.GLOBAL_MAP_DIMENSIONS[1]
+        total = g.GLOBAL_MAP_DIMENSIONS[0] * g.GLOBAL_MAP_DIMENSIONS[1] * len(self.data)
         return int(total / float(self.batch_size))
 
     #returns a batch
