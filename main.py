@@ -115,12 +115,12 @@ print("INPUT SIZE: " + str(g.INPUT_SIZE))
 g.OUTPUT_SIZE = get_output_dimensions(data_by_days[0])
 print("OUTPUT SIZE: " + str(g.OUTPUT_SIZE))
 
-model = get_model()
+model = get_model() 
 
 # NOTE !!! EVEN THO BELOW WE USE A WORD "DAY" WE REALLY MEAN "TICK"
 if len(data_by_days) >= 2:
     generator = DataGenerator(data_by_days)
     print("Generator len: " + str(len(generator)))
-    model.fit(generator)#, callbacks=[g.CP_CALLBACK])
+    model.fit(generator, callbacks=[g.CP_CALLBACK])
 else:
     print("NOT ENOUGH GRIB FILES FOR ACTUAL LEARNING!")
