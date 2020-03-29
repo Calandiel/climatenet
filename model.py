@@ -6,12 +6,12 @@ import pathlib
 def get_model():
     # Model goes here
     model = tf.keras.models.Sequential([
-        tf.keras.layers.Dense(g.INPUT_SIZE, activation='sigmoid', input_dim=g.INPUT_SIZE),
-        tf.keras.layers.Dense(g.INPUT_SIZE * 2, activation='sigmoid'),
+        tf.keras.layers.Dense(g.INPUT_SIZE, activation='relu', input_dim=g.INPUT_SIZE),
+        tf.keras.layers.Dense(g.INPUT_SIZE * 2, activation='relu'),
         tf.keras.layers.Dropout(0.15),
-        tf.keras.layers.Dense(g.INPUT_SIZE * 2, activation='sigmoid'),
+        tf.keras.layers.Dense(g.INPUT_SIZE * 2, activation='relu'),
         tf.keras.layers.Dropout(0.15),
-        tf.keras.layers.Dense(g.OUTPUT_SIZE, activation='linear')
+        tf.keras.layers.Dense(g.OUTPUT_SIZE, activation='relu')
     ])
     checkpoint_path = os.path.join(pathlib.Path(__file__).parent.absolute(), "checkpoints")
     #checkpoint_path = os.path.join(checkpoint_path, 'climate.nn')
