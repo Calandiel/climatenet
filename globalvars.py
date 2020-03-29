@@ -1,5 +1,5 @@
 
-RADIUS = 4 # how many cells in any direction do we use?
+RADIUS = 2 # 4 # how many cells in any direction do we use?
 
 # IF TRUE, IT WILL ONLY LOAD A SINGLE GRIB FILE
 JUST_ONE_FILE = False

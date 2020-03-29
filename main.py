@@ -121,9 +121,15 @@ model = get_model()
 if len(data_by_days) >= 2:
     generator = DataGenerator(data_by_days)
     print("Generator len: " + str(len(generator)))
+    
+    epochs_count = 10
+    
     if g.SHOULD_SAVE_MODEL:
-        model.fit(generator, callbacks=[g.CP_CALLBACK])
+        model.fit(generator, 
+                  epochs=epochs_count,
+                  callbacks=[g.CP_CALLBACK])
     else:
-        model.fit(generator)
+        model.fit(generator,
+                  epochs=epochs_count)
 else:
     print("NOT ENOUGH GRIB FILES FOR ACTUAL LEARNING!")

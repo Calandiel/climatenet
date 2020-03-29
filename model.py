@@ -11,16 +11,20 @@ def get_model():
         tf.keras.layers.Dropout(0.15),
         tf.keras.layers.Dense(g.INPUT_SIZE * 2, activation='relu'),
         tf.keras.layers.Dropout(0.15),
+        tf.keras.layers.Dense(g.INPUT_SIZE * 2, activation='relu'),
+        tf.keras.layers.Dropout(0.15),
         tf.keras.layers.Dense(g.OUTPUT_SIZE, activation='relu')
     ])
     checkpoint_path = os.path.join(pathlib.Path(__file__).parent.absolute(), "checkpoints")
     #checkpoint_path = os.path.join(checkpoint_path, 'climate.nn')
-    g.CP_CALLBACK = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
-                                                 verbose=0,
-                                                 save_freq=50)
+    if g.SHOULD_SAVE_MODEL:
+        g.CP_CALLBACK = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
+                                                           verbose=0,
+                                                           save_freq=50)
     model.compile(optimizer='adadelta',
                   loss='mean_squared_error',
                   metrics=['mean_absolute_error', 
-                           'mean_absolute_percentage_error',
-                           'mean_squared_error'])
+                           'mean_squared_logarithmic_error',
+                           'mean_squared_error',
+                           'logcosh'])
     return model
