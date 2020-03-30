@@ -1,4 +1,3 @@
-
 RADIUS = 2 # 4 # how many cells in any direction do we use?
 VERBOSITY = 2 #Verbosity of training. Options: 0 - silent, 1 - progress bar, 2 - no progress bar, update every epoch
 # IF TRUE, IT WILL ONLY LOAD A SINGLE GRIB FILE
@@ -19,3 +18,7 @@ OUTPUT_SIZE = -1
 # USED TO SAVE THE MODEL
 CP_CALLBACK = None
 SHOULD_SAVE_MODEL = True
+
+# FOR THE SUPERCOMPUTER
+MULTIPLE_GPUS = True
+GPU_COUNT = 2

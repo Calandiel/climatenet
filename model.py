@@ -2,6 +2,7 @@ import tensorflow as tf
 import globalvars as g
 import os
 import pathlib
+from tensorflow.keras.utils import multi_gpu_model
 
 def get_model():
     # Model goes here
@@ -27,4 +28,14 @@ def get_model():
                            'mean_squared_logarithmic_error',
                            'mean_squared_error',
                            'logcosh'])
-    return model
+    if g.MULTIPLE_GPUS:
+        pm = multi_gpu_model(model, gpus=g.GPU_COUNT)
+        pm.compile(optimizer='adadelta',
+                  loss='mean_squared_error',
+                  metrics=['mean_absolute_error', 
+                           'mean_squared_logarithmic_error',
+                           'mean_squared_error',
+                           'logcosh'])
+        return pm
+    else:
+        return model
