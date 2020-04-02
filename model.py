@@ -19,8 +19,8 @@ def get_model():
     #checkpoint_path = os.path.join(checkpoint_path, 'climate.nn')
     if g.SHOULD_SAVE_MODEL:
         g.CP_CALLBACK = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
-                                                           verbose=0,
-                                                           save_freq=50)
+                                                           verbose=1,
+                                                           save_freq=1000)
     model.compile(optimizer='adadelta',
                   loss='mean_squared_error',
                   metrics=['mean_absolute_error', 
