@@ -1,6 +1,6 @@
 
 RADIUS = 2 # 4 # how many cells in any direction do we use?
-
+VERBOSITY = 2 #Verbosity of training. Options: 0 - silent, 1 - progress bar, 2 - no progress bar, update every epoch
 # IF TRUE, IT WILL ONLY LOAD A SINGLE GRIB FILE
 JUST_ONE_FILE = False
 # IF TRUE, THE GAME WILL PRINT BAND DATA, THEIR UNITS, NAMES, SYMBOLS AND LAYERS
@@ -18,4 +18,4 @@ OUTPUT_SIZE = -1
 
 # USED TO SAVE THE MODEL
 CP_CALLBACK = None
-SHOULD_SAVE_MODEL = False
+SHOULD_SAVE_MODEL = True

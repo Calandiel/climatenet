@@ -127,9 +127,11 @@ if len(data_by_days) >= 2:
     if g.SHOULD_SAVE_MODEL:
         model.fit(generator, 
                   epochs=epochs_count,
-                  callbacks=[g.CP_CALLBACK])
+                  callbacks=[g.CP_CALLBACK],
+				  verbose=g.VERBOSITY)
     else:
         model.fit(generator,
-                  epochs=epochs_count)
+                  epochs=epochs_count,
+				  verbose=g.VERBOSITY)
 else:
     print("NOT ENOUGH GRIB FILES FOR ACTUAL LEARNING!")
