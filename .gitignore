@@ -1,6 +1,5 @@
 # input and output files
 data/
-checkpoints/
 output/
 build/
 models/
