@@ -115,7 +115,7 @@ print("INPUT SIZE: " + str(g.INPUT_SIZE))
 g.OUTPUT_SIZE = get_output_dimensions(data_by_days[0])
 print("OUTPUT SIZE: " + str(g.OUTPUT_SIZE))
 
-model = get_model() 
+model = get_model()
 
 # NOTE !!! EVEN THO BELOW WE USE A WORD "DAY" WE REALLY MEAN "TICK"
 if len(data_by_days) >= 2:
@@ -124,14 +124,36 @@ if len(data_by_days) >= 2:
     
     epochs_count = 10
     
+    history = None
+    
     if g.SHOULD_SAVE_MODEL:
-        model.fit(generator, 
+        history = model.fit(generator, 
                   epochs=epochs_count,
                   callbacks=[g.CP_CALLBACK],
 				  verbose=g.VERBOSITY)
     else:
-        model.fit(generator,
+        history = model.fit(generator,
                   epochs=epochs_count,
 				  verbose=g.VERBOSITY)
+    
+    # LOG STUFF
+    print(history.history.keys())
+    #  "Accuracy"
+    plt.plot(history.history['acc'])
+    plt.plot(history.history['val_acc'])
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper left')
+    plt.show()
+    # "Loss"
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper left')
+    plt.show()
+
 else:
     print("NOT ENOUGH GRIB FILES FOR ACTUAL LEARNING!")
