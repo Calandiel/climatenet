@@ -1,6 +1,6 @@
 import os
 import pathlib
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import gdal
 import tensorflow as tf
 import numpy as np
@@ -70,9 +70,9 @@ for ff in os.listdir(path):
         
         # Show the image
         if g.SHOULD_PLOT and ttl in vars_to_plot:
-            plt.pyplot.imshow(data, cmap='jet')
-            plt.pyplot.title(ttl)
-            plt.pyplot.show()
+            plt.imshow(data, cmap='jet')
+            plt.title(ttl)
+            plt.show()
 
         # Add data from this layer to data fields
         if ttl in data_vars:
@@ -119,36 +119,37 @@ model = get_model()
 
 # NOTE !!! EVEN THO BELOW WE USE A WORD "DAY" WE REALLY MEAN "TICK"
 if len(data_by_days) >= 2:
-    generator = DataGenerator(data_by_days)
+    generator = DataGenerator(data_by_days, batch_size=g.BATCH_SIZE)
     print("Generator len: " + str(len(generator)))
     
     epochs_count = g.EPOCHS
     
     history = None
     
+    print(model.summary())
     if g.SHOULD_SAVE_MODEL:
         history = model.fit(generator, 
                   epochs=epochs_count,
                   callbacks=[g.CP_CALLBACK],
-				  verbose=g.VERBOSITY)
+				  verbose=g.VERBOSITY,
+                  validation_split=g.VALIDATION_SPLIT)
     else:
         history = model.fit(generator,
                   epochs=epochs_count,
-				  verbose=g.VERBOSITY)
+				  verbose=g.VERBOSITY,
+                  validation_split=g.VALIDATION_SPLIT)
     
     # LOG STUFF
     print(history.history.keys())
     #  "Accuracy"
-    plt.plot(history.history['acc'])
-    plt.plot(history.history['val_acc'])
+    plt.plot(history.history['mean_absolute_error'])
     plt.title('model accuracy')
-    plt.ylabel('accuracy')
+    plt.ylabel('mean_absolute_error')
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper left')
     plt.show()
     # "Loss"
     plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
     plt.title('model loss')
     plt.ylabel('loss')
     plt.xlabel('epoch')
