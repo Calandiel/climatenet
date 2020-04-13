@@ -122,7 +122,7 @@ if len(data_by_days) >= 2:
     generator = DataGenerator(data_by_days)
     print("Generator len: " + str(len(generator)))
     
-    epochs_count = 10
+    epochs_count = g.EPOCHS
     
     history = None
     
