@@ -119,7 +119,14 @@ model = get_model()
 
 # NOTE !!! EVEN THO BELOW WE USE A WORD "DAY" WE REALLY MEAN "TICK"
 if len(data_by_days) >= 2:
-    generator = DataGenerator(data_by_days, batch_size=g.BATCH_SIZE)
+    generator = DataGenerator(
+        data_by_days, 
+        batch_size=g.BATCH_SIZE, 
+        len_multiplier=g.EPOCH_LENGHT_MULTIPLIER)
+    validation_generator = DataGenerator(
+        data_by_days, 
+        batch_size=g.BATCH_SIZE,
+        len_multiplier=g.VALIDATION_LENGTH_MULTIPLIER)
     print("Generator len: " + str(len(generator)))
     
     epochs_count = g.EPOCHS
@@ -132,17 +139,18 @@ if len(data_by_days) >= 2:
                   epochs=epochs_count,
                   callbacks=[g.CP_CALLBACK],
 				  verbose=g.VERBOSITY,
-                  validation_split=g.VALIDATION_SPLIT)
+                  validation_data=validation_generator)
     else:
         history = model.fit(generator,
                   epochs=epochs_count,
 				  verbose=g.VERBOSITY,
-                  validation_split=g.VALIDATION_SPLIT)
+                  validation_data=validation_generator)
     
     # LOG STUFF
     print(history.history.keys())
     #  "Accuracy"
     plt.plot(history.history['mean_absolute_error'])
+    plt.plot(history.history['val_mean_absolute_error'])
     plt.title('model accuracy')
     plt.ylabel('mean_absolute_error')
     plt.xlabel('epoch')
@@ -150,6 +158,7 @@ if len(data_by_days) >= 2:
     plt.show()
     # "Loss"
     plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
     plt.title('model loss')
     plt.ylabel('loss')
     plt.xlabel('epoch')

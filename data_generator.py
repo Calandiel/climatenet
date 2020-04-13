@@ -6,11 +6,11 @@ import globalvars as g
 
 class DataGenerator(tf.keras.utils.Sequence):
 
-    def __init__(self, data, batch_size = 32):
-        self.data, self.batch_size = data, batch_size
+    def __init__(self, data, batch_size = 32, len_multiplier = 1.0):
+        self.data, self.batch_size, self.len_mul = data, batch_size, len_multiplier
     def __len__(self):
         total = g.GLOBAL_MAP_DIMENSIONS[0] * g.GLOBAL_MAP_DIMENSIONS[1] * len(self.data)
-        return int(total / float(self.batch_size) * g.EPOCH_LENGHT_MULTIPLIER)
+        return int(total / float(self.batch_size) * self.len_mul)
 
     #returns a batch
     def __getitem__(self, index):        
