@@ -16,26 +16,11 @@ def get_model():
         tf.keras.layers.Dropout(rate=0.15),
         tf.keras.layers.Dense(g.OUTPUT_SIZE, activation='relu')
     ])
-    checkpoint_path = os.path.join(pathlib.Path(__file__).parent.absolute(), "checkpoints")
-    #checkpoint_path = os.path.join(checkpoint_path, 'climate.nn')
-    if g.SHOULD_SAVE_MODEL:
-        g.CP_CALLBACK = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
-                                                           verbose=1,
-                                                           save_freq=1000)
+
     model.compile(optimizer='adadelta',
                   loss='mean_squared_error',
                   metrics=['mean_absolute_error', 
                            'mean_squared_logarithmic_error',
                            'mean_squared_error',
                            'logcosh'])
-    if g.MULTIPLE_GPUS:
-        pm = multi_gpu_model(model, gpus=g.GPU_COUNT)
-        pm.compile(optimizer='adadelta',
-                  loss='mean_squared_error',
-                  metrics=['mean_absolute_error', 
-                           'mean_squared_logarithmic_error',
-                           'mean_squared_error',
-                           'logcosh'])
-        return pm
-    else:
-        return model
+    return model

@@ -128,30 +128,20 @@ if len(data_by_days) >= 2:
         batch_size=g.BATCH_SIZE,
         len_multiplier=g.VALIDATION_LENGTH_MULTIPLIER)
     print("Generator len: " + str(len(generator)))
+    print(model.summary())
     
     epochs_count = g.EPOCHS
-    
-    history = None
-    
-    print(model.summary())
-    if g.SHOULD_SAVE_MODEL:
-        history = model.fit(generator, 
-                  epochs=epochs_count,
-                  callbacks=[g.CP_CALLBACK],
-				  verbose=g.VERBOSITY,
-                  validation_data=validation_generator)
-    else:
-        history = model.fit(generator,
-                  epochs=epochs_count,
-				  verbose=g.VERBOSITY,
-                  validation_data=validation_generator)
+    history = model.fit(generator,
+              epochs=epochs_count,
+              verbose=g.VERBOSITY,
+              validation_data=validation_generator)
     
     # LOG STUFF
     print(history.history.keys())
     #  "Accuracy"
     plt.plot(history.history['mean_absolute_error'])
     plt.plot(history.history['val_mean_absolute_error'])
-    plt.title('model accuracy')
+    plt.title('mean_absolute_error')
     plt.ylabel('mean_absolute_error')
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper left')
@@ -165,5 +155,11 @@ if len(data_by_days) >= 2:
     plt.legend(['train', 'validation'], loc='upper left')
     plt.show()
 
+
+    # SAVE MODEL
+    tf.keras.models.save_model(model, "/models/model_cache")
+
 else:
     print("NOT ENOUGH GRIB FILES FOR ACTUAL LEARNING!")
+
+

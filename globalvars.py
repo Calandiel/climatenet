@@ -7,7 +7,7 @@ RADIUS = 2 # 4 # how many cells in any direction do we use?
 #######################
 ### TRAINING PARAMS ###
 #######################
-EPOCHS = 10
+EPOCHS = 3
 EPOCH_LENGHT_MULTIPLIER = 0.001
 BATCH_SIZE = 32
 VALIDATION_LENGTH_MULTIPLIER = 0.001
@@ -19,7 +19,6 @@ VALIDATION_LENGTH_MULTIPLIER = 0.001
 GLOBAL_MAP_DIMENSIONS = (-1, -1)
 INPUT_SIZE = -1
 OUTPUT_SIZE = -1
-CP_CALLBACK = None # USED TO SAVE THE MODEL
 
 
 ################################
@@ -32,7 +31,3 @@ PRINT_USED = False
 SHOULD_PLOT = True # IF TRUE, IT WILL GENERATE A PLOT FOR EVERY RASTER BAND
 SHOULD_DISPLAY_BAND_STATS = True # IF TRUE, DISPLAYS MAX/MIN OF PRINTED RASTER BANDS
 SHOULD_SAVE_MODEL = False
-
-# FOR THE SUPERCOMPUTER (warning, it doesn't work yet and RAM limitations seem to make it better to use the CPU anyway)
-MULTIPLE_GPUS = False
-GPU_COUNT = 2
