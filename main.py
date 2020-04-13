@@ -160,8 +160,7 @@ if len(data_by_days) >= 2:
     if g.SHOULD_SAVE_MODEL:
         dirname = os.path.dirname(__file__)
         filename = os.path.join(dirname, 'models')
-        os.makedirs(filename)
-        tf.keras.models.save_model(model, filename)
+        tf.keras.models.save_model(model, filename, overwrite=True)
 else:
     print("NOT ENOUGH GRIB FILES FOR ACTUAL LEARNING!")
 
