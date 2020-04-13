@@ -1,5 +1,9 @@
 import tensorflow as tf
+import os
 
-model = tf.keras.models.load_model("models/saved_model.pb")
+dirname = os.path.dirname(__file__)
+filename = os.path.join(dirname, 'models')
+
+model = tf.keras.models.load_model(filename)
 
 print(model.summary())

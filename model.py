@@ -1,8 +1,5 @@
 import tensorflow as tf
 import globalvars as g
-import os
-import pathlib
-from tensorflow.keras.utils import multi_gpu_model
 
 def get_model():
     # Model goes here
