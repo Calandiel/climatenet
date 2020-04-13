@@ -157,8 +157,8 @@ if len(data_by_days) >= 2:
 
 
     # SAVE MODEL
-    tf.keras.models.save_model(model, "/models/model_cache")
-
+    if g.SHOULD_SAVE_MODEL:
+        tf.keras.models.save_model(model, "/models/model_cache")
 else:
     print("NOT ENOUGH GRIB FILES FOR ACTUAL LEARNING!")
 
