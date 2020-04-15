@@ -115,17 +115,20 @@ print("INPUT SIZE: " + str(g.INPUT_SIZE))
 g.OUTPUT_SIZE = get_output_dimensions(data_by_days[0])
 print("OUTPUT SIZE: " + str(g.OUTPUT_SIZE))
 
-model = get_model()
+mirrored_strategy = tf.distribute.MirroredStrategy()
+print('Number of devices: {}'.format(mirrored_strategy.num_replicas_in_sync))
+with mirrored_strategy.scope():
+	model = get_model()
 
 # NOTE !!! EVEN THO BELOW WE USE A WORD "DAY" WE REALLY MEAN "TICK"
 if len(data_by_days) >= 2:
     generator = DataGenerator(
         data_by_days, 
-        batch_size=g.BATCH_SIZE, 
+        batch_size=g.BATCH_SIZE*mirrored_strategy.num_replicas_in_sync, 
         len_multiplier=g.EPOCH_LENGHT_MULTIPLIER)
     validation_generator = DataGenerator(
         data_by_days, 
-        batch_size=g.BATCH_SIZE,
+        batch_size=g.BATCH_SIZE*mirrored_strategy.num_replicas_in_sync,
         len_multiplier=g.VALIDATION_LENGTH_MULTIPLIER)
     print("Generator len: " + str(len(generator)))
     print(model.summary())
