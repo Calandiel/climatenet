@@ -141,3 +141,5 @@ climate-training-cpu.sh
 climate-training.sh
 slurm-logs/
 slurm*.out
+climatejob*.out
+climatejob*.err
