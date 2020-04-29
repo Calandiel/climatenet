@@ -139,5 +139,5 @@ dmypy.json
 # Supercomputer stuff
 slurm-logs/
 slurm*.out
-climatejob*.err
 climatejob*.out
+climatejob*.err
