@@ -1,4 +1,5 @@
 import os
+import json
 import pathlib
 import matplotlib.pyplot as plt
 import gdal
@@ -8,6 +9,7 @@ import sys
 
 import globalvars as g
 
+from slurm_cluster_resolver import SlurmClusterResolver ##Code copied from GitHub. Has been reviewed and merged into tensorflow github, but is so fresh it hasn't been published yet.
 from data_generator import DataGenerator
 from model import get_model
 from included_vars import data_vars, vars_to_plot, operators
@@ -15,7 +17,21 @@ from included_vars import data_vars, vars_to_plot, operators
 print('Python version: %s' % sys.version)
 print('TensorFlow version: %s' % tf.__version__)
 print('Keras version: %s' % tf.keras.__version__)
-    
+
+
+def set_tf_config(resolver, environment=None):
+    """Set the TF_CONFIG env variable from the given cluster resolver - from https://github.com/tensorflow/tensorflow/issues/36094"""
+    cfg = {
+        'cluster': resolver.cluster_spec().as_dict(),
+        'task': {
+            'type': resolver.get_task_info()[0],
+            'index': resolver.get_task_info()[1],
+        },
+        'rpc_layer': resolver.rpc_layer,
+    }
+    if environment:
+        cfg['environment'] = environment
+    os.environ['TF_CONFIG'] = json.dumps(cfg)
 def get_band_identifier(band_data):
     desc = band_data.GetDescription()
     metadata = band_data.GetMetadata()     
@@ -115,17 +131,23 @@ print("INPUT SIZE: " + str(g.INPUT_SIZE))
 g.OUTPUT_SIZE = get_output_dimensions(data_by_days[0])
 print("OUTPUT SIZE: " + str(g.OUTPUT_SIZE))
 
-model = get_model()
+#strategy = tf.distribute.MirroredStrategy() ## Previous singlenode, multiGPU strat
+resolver = SlurmClusterResolver()
+set_tf_config(resolver)
+strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy(cluster_resolver=resolver)
+print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
+with strategy.scope():
+    model = get_model()
 
 # NOTE !!! EVEN THO BELOW WE USE A WORD "DAY" WE REALLY MEAN "TICK"
 if len(data_by_days) >= 2:
     generator = DataGenerator(
         data_by_days, 
-        batch_size=g.BATCH_SIZE, 
+        batch_size=g.BATCH_SIZE*strategy.num_replicas_in_sync, 
         len_multiplier=g.EPOCH_LENGHT_MULTIPLIER)
     validation_generator = DataGenerator(
         data_by_days, 
-        batch_size=g.BATCH_SIZE,
+        batch_size=g.BATCH_SIZE*strategy.num_replicas_in_sync,
         len_multiplier=g.VALIDATION_LENGTH_MULTIPLIER)
     print("Generator len: " + str(len(generator)))
     print(model.summary())

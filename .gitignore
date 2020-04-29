@@ -137,7 +137,7 @@ dmypy.json
 .pyre/
 
 # Supercomputer stuff
-climate-training-cpu.sh
-climate-training.sh
 slurm-logs/
 slurm*.out
+climatejob*.out
+climatejob*.err
