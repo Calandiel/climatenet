@@ -25,6 +25,7 @@ export KMP_AFFINITY=granularity=fine,compact,0,0
 
 module purge
 module load fosscuda/2019b
+module load NCCL/2.4.8
 module load TensorFlow/2.1.0-Python-3.7.4
 module load GDAL/3.0.2-Python-3.7.4
 

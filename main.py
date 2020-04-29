@@ -137,53 +137,53 @@ set_tf_config(resolver)
 strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy(cluster_resolver=resolver)
 print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
 with strategy.scope():
-	model = get_model()
+    model = get_model()
 
 # NOTE !!! EVEN THO BELOW WE USE A WORD "DAY" WE REALLY MEAN "TICK"
 if len(data_by_days) >= 2:
-	generator = DataGenerator(
-		data_by_days, 
-		batch_size=g.BATCH_SIZE*strategy.num_replicas_in_sync, 
-		len_multiplier=g.EPOCH_LENGHT_MULTIPLIER)
-	validation_generator = DataGenerator(
-		data_by_days, 
-		batch_size=g.BATCH_SIZE*strategy.num_replicas_in_sync,
-		len_multiplier=g.VALIDATION_LENGTH_MULTIPLIER)
-	print("Generator len: " + str(len(generator)))
-	print(model.summary())
-	
-	epochs_count = g.EPOCHS
-	history = model.fit(generator,
-			  epochs=epochs_count,
-			  verbose=g.VERBOSITY,
-			  validation_data=validation_generator)
-	
-	# LOG STUFF
-	print(history.history.keys())
-	#  "Accuracy"
-	plt.plot(history.history['mean_absolute_error'])
-	plt.plot(history.history['val_mean_absolute_error'])
-	plt.title('mean_absolute_error')
-	plt.ylabel('mean_absolute_error')
-	plt.xlabel('epoch')
-	plt.legend(['train', 'validation'], loc='upper left')
-	plt.show()
-	# "Loss"
-	plt.plot(history.history['loss'])
-	plt.plot(history.history['val_loss'])
-	plt.title('model loss')
-	plt.ylabel('loss')
-	plt.xlabel('epoch')
-	plt.legend(['train', 'validation'], loc='upper left')
-	plt.show()
+    generator = DataGenerator(
+        data_by_days, 
+        batch_size=g.BATCH_SIZE*strategy.num_replicas_in_sync, 
+        len_multiplier=g.EPOCH_LENGHT_MULTIPLIER)
+    validation_generator = DataGenerator(
+        data_by_days, 
+        batch_size=g.BATCH_SIZE*strategy.num_replicas_in_sync,
+        len_multiplier=g.VALIDATION_LENGTH_MULTIPLIER)
+    print("Generator len: " + str(len(generator)))
+    print(model.summary())
+    
+    epochs_count = g.EPOCHS
+    history = model.fit(generator,
+              epochs=epochs_count,
+              verbose=g.VERBOSITY,
+              validation_data=validation_generator)
+    
+    # LOG STUFF
+    print(history.history.keys())
+    #  "Accuracy"
+    plt.plot(history.history['mean_absolute_error'])
+    plt.plot(history.history['val_mean_absolute_error'])
+    plt.title('mean_absolute_error')
+    plt.ylabel('mean_absolute_error')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper left')
+    plt.show()
+    # "Loss"
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper left')
+    plt.show()
 
 
-	# SAVE MODEL
-	if g.SHOULD_SAVE_MODEL:
-		dirname = os.path.dirname(__file__)
-		filename = os.path.join(dirname, 'models')
-		tf.keras.models.save_model(model, filename, overwrite=True)
+    # SAVE MODEL
+    if g.SHOULD_SAVE_MODEL:
+        dirname = os.path.dirname(__file__)
+        filename = os.path.join(dirname, 'models')
+        tf.keras.models.save_model(model, filename, overwrite=True)
 else:
-	print("NOT ENOUGH GRIB FILES FOR ACTUAL LEARNING!")
+    print("NOT ENOUGH GRIB FILES FOR ACTUAL LEARNING!")
 
 
