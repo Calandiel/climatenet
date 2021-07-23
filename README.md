@@ -9,3 +9,7 @@ and find key definitions at https://www.nco.ncep.noaa.gov/pmb/docs/on388/table2.
 Place .grb2 files in the data directory.
 Download at least two, make sure they represent consecutive hours.
 I suggest you get data from this area specificaly: https://nomads.ncdc.noaa.gov/data/gfs4/
+
+Update: July 23, 2021
+It was brought to my attention that this project may be difficult to get going again.
+Apparently nomads changed their data repository and the above links may provide wrong information.
