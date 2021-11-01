@@ -50,6 +50,9 @@ koppens = [
 	[102, 102, 102]
 ]
 
+x_train = []
+y_train = []
+
 for a in data:
 	start_time = time.time()
 
@@ -93,23 +96,31 @@ for a in data:
 				raise Exception("NO PIXEL SEEMS TO BE A CLOSE FIT FOR PIXEL: " + str(x) + ", " + str(y) + " IN: " + str(a) + " WITH COLOR: " + str(l))
 			label_data[y, x, index] = 1
 
+	x_train.append(input_data.flatten())
+	y_train.append(label_data.flatten())
+
 	end_time = time.time()
 	print(str(a) + ": " + str(end_time - start_time) + "s")
+
 
 print("Image loaded!")
 
 
+model = tf.keras.models.Sequential()
+model.add(tf.keras.Input(shape=(800*400*6,)))
+model.add(tf.keras.layers.Dense(800*400*12, activation='relu'))
+model.add(tf.keras.layers.Dense(800*400*len(koppens)))
+model.compile(
+	optimizer="adam",
+	loss="mean_squared_error",
+	metrics=["mean_absolute_error"]
+)
 
-"""
-# Model goes here
-model = tf.keras.Sequential([
-    tf.keras.layers.Conv2D(kernel_size=3, filters=16, activation='relu', input_shape=[IMG_SIZE,IMG_SIZE, 3]),
+history = model.fit(
+	x_train,
+	y_train,
+	batch_size=1,
+	epochs=2000
+)
 
-
-model.compile(optimizer='adadelta',
-              loss='mean_squared_error',
-              metrics=['mean_absolute_error', 
-                       'mean_squared_logarithmic_error',
-                       'mean_squared_error',
-                       'logcosh'])
-"""
+print("--- all done ---")
