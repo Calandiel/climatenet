@@ -67,8 +67,8 @@ for a in data:
 	input_data = np.zeros((img_input.shape[0], img_input.shape[1], 6))
 	label_data = np.zeros((img_input.shape[0], img_input.shape[1], 28))
 
-	for y in range(0, img_input.shape[0]):
-		for x in range(0, img_input.shape[1]):
+	for y in range(img_input.shape[0]):
+		for x in range(img_input.shape[1]):
 			# Process input
 			p = img_input[y, x]
 			if all(p == [0, 0, 255]):
@@ -89,7 +89,7 @@ for a in data:
 			l = img_label[y, x]
 			min_dist = 255 * 4
 			index = 0
-			for n in range(0, len(koppens)):
+			for n in range(len(koppens)):
 				h = koppens[n]
 				dist = abs(h[0] - l[0]) + abs(h[1] - l[1]) + abs(h[2] - l[2])
 				if dist < min_dist:
@@ -174,16 +174,16 @@ class DataGenerator(tf.keras.utils.Sequence):
 		return 100 # int(np.floor(self.x_data.shape[0] / self.batch_size))
 
 	def __getitem__(self, index):
-		x = np.array([np.zeros((dd, dd, 6)) for o in range(0, self.batch_size)])
-		y = np.array([np.zeros((len(koppens))) for o in range(0, self.batch_size)])
+		x = np.array([np.zeros((dd, dd, 6)) for o in range(self.batch_size)])
+		y = np.array([np.zeros((len(koppens))) for o in range(self.batch_size)])
 
-		for o in range(0, self.batch_size):
+		for o in range(self.batch_size):
 			ni = random.randint(0, self.x_data.shape[0] - 1) # index of the image from which we're copying data
 			xin = random.randint(0, self.x_data.shape[2] - 1)  # x of the pixel we're looking at
 			yin = random.randint(0, self.x_data.shape[1] - 1)  # y of the pixel we're looking at
 
 			x[o] = get_sub_array(ni, xin, yin, self.x_data)
-			for i in range(0, len(koppens)):
+			for i in range(len(koppens)):
 				y[o, i] = self.y_data[ni, yin, xin, i]
 
 		return x, y
@@ -226,9 +226,9 @@ def map_func(ii):
 	prediction_data = np.array([get_sub_array(0, x, ii, x_train)])
 	cc = model.predict(prediction_data)
 	return koppens[np.argmax(cc[0])] / 255.0
-for x in range(0, x_train.shape[2]):
+for x in range(x_train.shape[2]):
 	print("X>"+str(x))
-	results = np.array(pool.map(map_func, np.array(range(0, x_train.shape[1]))))
+	results = np.array(pool.map(map_func, np.array(range(x_train.shape[1]))))
 	img_to_save[x] = results
 	end_time = time.time()
 	print("time thus far: " + str(end_time - start_time) + ", ETA: " + str((x_train.shape[2] * (end_time - start_time) / (x + 1.0))))
