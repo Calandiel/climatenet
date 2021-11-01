@@ -96,8 +96,8 @@ for a in data:
 				raise Exception("NO PIXEL SEEMS TO BE A CLOSE FIT FOR PIXEL: " + str(x) + ", " + str(y) + " IN: " + str(a) + " WITH COLOR: " + str(l))
 			label_data[y, x, index] = 1
 
-	x_train.append(input_data.flatten())
-	y_train.append(label_data.flatten())
+	x_train.append(input_data)
+	y_train.append(label_data)
 
 	end_time = time.time()
 	print(str(a) + ": " + str(end_time - start_time) + "s")
@@ -105,22 +105,39 @@ for a in data:
 
 print("Image loaded!")
 
+x_train = np.array(x_train)
+y_train = np.array(y_train)
+print(x_train[0].shape)
+print(y_train[0].shape)
+
 
 model = tf.keras.models.Sequential()
-model.add(tf.keras.Input(shape=(800*400*6,)))
-model.add(tf.keras.layers.Dense(800*400*12, activation='relu'))
-model.add(tf.keras.layers.Dense(800*400*len(koppens)))
+model.add(tf.keras.Input(shape=(400, 800, 6,)))
+model.add(tf.keras.layers.Conv2D(32, kernel_size=(3, 3), activation='relu'))
+model.add(tf.keras.layers.Conv2D(len(koppens), kernel_size=(3, 3), activation='relu'))
+#model.add(tf.keras.layers.Flatten())
+#model.add(tf.keras.layers.Dense(1))
+#model.add(tf.keras.layers.Flatten())
+#model.add(tf.keras.layers.Dense(1, activation='relu'))
+#model.add(tf.keras.layers.Dense(400*800*len(koppens)))
+#model.add(tf.keras.layers.Reshape((400, 800, len(koppens),)))
+
+print("--- compiling the model ---")
 model.compile(
 	optimizer="adam",
 	loss="mean_squared_error",
 	metrics=["mean_absolute_error"]
 )
+model.summary()
 
+print("--- model fit ---")
 history = model.fit(
 	x_train,
 	y_train,
 	batch_size=1,
-	epochs=2000
+	epochs=5
 )
+
+
 
 print("--- all done ---")
