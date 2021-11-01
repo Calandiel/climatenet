@@ -212,7 +212,7 @@ print("--- model fit ---")
 gen = DataGenerator(100, x_train, y_train)
 history = model.fit(
 	gen,
-	epochs=1,
+	epochs=100,
 	workers=10
 )
 
