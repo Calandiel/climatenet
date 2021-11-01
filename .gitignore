@@ -1,8 +1,4 @@
-# input and output files
-data/
-output/
-build/
-models/
+export.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

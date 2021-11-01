@@ -6,6 +6,7 @@ import numpy as np
 import sys
 import time
 from tensorflow.keras.preprocessing.image import load_img,img_to_array
+from tensorflow.keras import layers
 
 print('Python version: %s' % sys.version)
 print('TensorFlow version: %s' % tf.__version__)
@@ -107,20 +108,20 @@ print("Image loaded!")
 
 x_train = np.array(x_train)
 y_train = np.array(y_train)
-print(x_train[0].shape)
-print(y_train[0].shape)
+#print(x_train[0].shape)
+#print(y_train[0].shape)
 
+tensor = tf.constant(0, shape=(400, 800, len(koppens)))
+def resize_like(input_tensor, ref_tensor): # resizes input tensor wrt. ref_tensor
+	H, W = ref_tensor.get_shape()[0], ref_tensor.get_shape()[1]
+	return tf.image.resize(input_tensor, [H, W], method="nearest")
 
 model = tf.keras.models.Sequential()
 model.add(tf.keras.Input(shape=(400, 800, 6,)))
-model.add(tf.keras.layers.Conv2D(32, kernel_size=(3, 3), activation='relu'))
-model.add(tf.keras.layers.Conv2D(len(koppens), kernel_size=(3, 3), activation='relu'))
-#model.add(tf.keras.layers.Flatten())
-#model.add(tf.keras.layers.Dense(1))
-#model.add(tf.keras.layers.Flatten())
-#model.add(tf.keras.layers.Dense(1, activation='relu'))
-#model.add(tf.keras.layers.Dense(400*800*len(koppens)))
-#model.add(tf.keras.layers.Reshape((400, 800, len(koppens),)))
+model.add(layers.Conv2D(32, kernel_size=(4, 4), activation='relu'))
+model.add(layers.Conv2D(len(koppens), kernel_size=(4, 4), activation='relu'))
+model.add(layers.Conv2D(len(koppens), kernel_size=(3, 3), activation='relu'))
+model.add(layers.Lambda(resize_like, output_shape=(400, 800, len(koppens)), arguments={'ref_tensor': tensor}))
 
 print("--- compiling the model ---")
 model.compile(
@@ -135,9 +136,30 @@ history = model.fit(
 	x_train,
 	y_train,
 	batch_size=1,
-	epochs=5
+	epochs=500
 )
 
-
+print("--- model predict ---")
+result = model.predict(np.array([x_train[0]]))
+print("Result:")
+print(result)
+print(result.shape)
+img_to_save = np.zeros((result.shape[1], result.shape[2], 3))
+for x in range(0, result.shape[2]):
+	for y in range(0, result.shape[1]):
+		best = koppens[0]
+		best_w = -1
+		for k in range(0, len(koppens)):
+			v = result[0, y, x, k]
+			if v > best_w:
+				best = koppens[k]
+				best_w = v
+		img_to_save[y, x, 0] = best[0] / 255.0
+		img_to_save[y, x, 1] = best[1] / 255.0
+		img_to_save[y, x, 2] = best[2] / 255.0
+print("Image to save:")
+print(img_to_save)
+print(img_to_save.shape)
+plt.imsave("export.png", img_to_save)
 
 print("--- all done ---")
