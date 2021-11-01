@@ -113,6 +113,54 @@ y_train = np.array(y_train)
 #print(y_train[0].shape)
 
 dd = 66 * 2 + 1
+
+def get_sub_array(ni, xin, yin, slices_of_data):
+	dim = int((dd - 1) / 2)
+	low_x = xin - dim
+	high_x = xin + dim
+	low_y = yin - dim
+	high_y = yin + dim
+
+	top_right_x_low = 0
+	top_right_x_high = 0
+	top_left_x_low = 0
+	top_left_x_high = 0
+	if low_x < 0:
+		top_left_x_low = low_x % slices_of_data.shape[2]
+		top_left_x_high = slices_of_data.shape[2] + 1
+		top_right_x_low = 0
+		top_right_x_high = high_x + 1
+	elif high_x >= slices_of_data.shape[2]:
+		top_left_x_low = low_x
+		top_left_x_high = slices_of_data.shape[2] + 1
+		top_right_x_low = 0
+		top_right_x_high = 1 + (high_x % slices_of_data.shape[2])
+	else:
+		top_right_x_low = low_x
+		top_right_x_high = high_x + 1
+
+	down_zeros_size = 0
+	up_zeros_size = 0
+	if low_y < 0:
+		down_zeros_size = abs(low_y)
+		low_y = 0
+		high_y = high_y + 1
+	elif high_y >= slices_of_data.shape[1]:
+		up_zeros_size = 1 + high_y - slices_of_data.shape[1]
+		high_y = slices_of_data.shape[1] + 1
+	else:
+		high_y = high_y + 1
+
+	left_part = slices_of_data[ni, low_y:high_y, top_left_x_low:top_left_x_high, :]
+	right_part = slices_of_data[ni, low_y:high_y, top_right_x_low:top_right_x_high, :]
+	combined = np.concatenate((left_part, right_part), axis=1)
+	combined = np.concatenate((
+		np.zeros((down_zeros_size, dd, 6)),
+		combined,
+		np.zeros((up_zeros_size, dd, 6))
+		), axis=0)
+	return combined
+
 class DataGenerator(tf.keras.utils.Sequence):
 	def __init__(self, batch_size, x_s, y_s, *args, **kwargs):
 		self.batch_size = batch_size
@@ -120,7 +168,7 @@ class DataGenerator(tf.keras.utils.Sequence):
 		self.y_data = y_s
 
 	def __len__(self):
-		return 1 # int(np.floor(self.x_data.shape[0] / self.batch_size))
+		return 100 # int(np.floor(self.x_data.shape[0] / self.batch_size))
 
 	def __getitem__(self, index):
 		x = np.array([np.zeros((dd, dd, 6)) for o in range(0, self.batch_size)])
@@ -131,22 +179,8 @@ class DataGenerator(tf.keras.utils.Sequence):
 			xin = random.randint(0, self.x_data.shape[2] - 1)  # x of the pixel we're looking at
 			yin = random.randint(0, self.x_data.shape[1] - 1)  # y of the pixel we're looking at
 
-			dim = int((dd - 1) / 2)
-			for xx in range(-dim, dim+1):
-				loc_x = xin + xx
-				# Bound check. Loop x around
-				loc_x = loc_x % self.x_data.shape[2]
-				for yy in range(-dim, dim+1):
-					loc_y = yin + yy
-					# Bound check. Do not do anything with points that are out of bounds
-					if loc_y >= self.x_data.shape[1]:
-						continue
-					if loc_y < 0:
-						continue
-					# Copy data
-					for i in range(0, 6):
-						x[o, xx, yy, i] = self.x_data[ni, loc_y, loc_x, i]
-			for i in range(0, 6):
+			x[o] = get_sub_array(ni, xin, yin, self.x_data)
+			for i in range(0, len(koppens)):
 				y[o, i] = self.y_data[ni, yin, xin, i]
 
 		return x, y
@@ -175,7 +209,7 @@ print("--- model fit ---")
 gen = DataGenerator(100, x_train, y_train)
 history = model.fit(
 	gen,
-	epochs=2,
+	epochs=200,
 	workers=10
 )
 
@@ -185,27 +219,12 @@ start_time = time.time()
 image_id = 0
 img_to_save = np.zeros((x_train.shape[2], x_train.shape[1], 3))
 for x in range(0, x_train.shape[2]):
+	print("X>"+str(x))
 	for y in range(0, x_train.shape[1]):
-		prediction_data = np.array([ np.zeros((dd, dd, 6)) ])
-		dim = int((dd - 1) / 2)
-		for xx in range(-dim, dim+1):
-			loc_x = x + xx
-			# Bound check. Loop x around
-			loc_x = loc_x % x_train.shape[2]
-			for yy in range(-dim, dim+1):
-				loc_y = y + yy
-				# Bound check. Do not do anything with points that are out of bounds
-				if loc_y >= x_train.shape[1]:
-					continue
-				if loc_y < 0:
-					continue
-				# Copy data
-				for i in range(0, 6):
-					prediction_data[0, xx, yy, i] = x_train[image_id, loc_y, loc_x, i]
-
+		prediction_data = np.array([get_sub_array(0, x, y, x_train)])
+		cc = model.predict(prediction_data)
 		best = koppens[0]
 		best_w = -1
-		cc = model.predict(prediction_data)
 		for k in range(0, len(koppens)):
 			v = cc[0, k]
 			if v > best_w:
