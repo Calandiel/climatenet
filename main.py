@@ -191,11 +191,11 @@ class DataGenerator(tf.keras.utils.Sequence):
 model = tf.keras.models.Sequential()
 model.add(tf.keras.Input(shape=(dd, dd, 6)))
 model.add(layers.Conv2D(16, kernel_size=(2, 2), activation='relu'))
-model.add(layers.Conv2D(8, kernel_size=(3, 3), strides=(2, 2), activation='relu'))
-model.add(layers.Conv2D(8, kernel_size=(3, 3), strides=(2, 2), activation='relu'))
-model.add(layers.Conv2D(8, kernel_size=(3, 3), strides=(2, 2), activation='relu'))
+model.add(layers.Conv2D(8, kernel_size=(3, 3), strides=(2, 2), activation='sigmoid'))
+model.add(layers.Conv2D(8, kernel_size=(3, 3), strides=(2, 2), activation='sigmoid'))
+model.add(layers.Conv2D(8, kernel_size=(3, 3), strides=(2, 2), activation='sigmoid'))
 model.add(layers.Flatten())
-model.add(layers.Dense(len(koppens)))
+model.add(layers.Dense(len(koppens), activation='softmax'))
 
 print("--- compiling the model ---")
 model.compile(
