@@ -8,6 +8,9 @@ import time
 import random
 from tensorflow.keras.preprocessing.image import load_img,img_to_array
 from tensorflow.keras import layers
+from multiprocessing.dummy import Pool as ThreadPool
+
+
 
 print('Python version: %s' % sys.version)
 print('TensorFlow version: %s' % tf.__version__)
@@ -209,7 +212,7 @@ print("--- model fit ---")
 gen = DataGenerator(100, x_train, y_train)
 history = model.fit(
 	gen,
-	epochs=10,
+	epochs=1,
 	workers=10
 )
 
@@ -218,15 +221,17 @@ start_time = time.time()
 # ID of the image in x_train that we want to export. 0 stands for Earth
 image_id = 0
 img_to_save = np.zeros((x_train.shape[2], x_train.shape[1], 3))
+pool = ThreadPool(10)
+def map_func(ii):
+	prediction_data = np.array([get_sub_array(0, x, ii, x_train)])
+	cc = model.predict(prediction_data)
+	return koppens[np.argmax(cc[0])] / 255.0
 for x in range(0, x_train.shape[2]):
 	print("X>"+str(x))
-	for y in range(0, x_train.shape[1]):
-		prediction_data = np.array([get_sub_array(0, x, y, x_train)])
-		cc = model.predict(prediction_data)
-		best = koppens[np.argmax(cc[0])] / 255.0
-		img_to_save[y, x] = best
+	results = np.array(pool.map(map_func, np.array(range(0, x_train.shape[1]))))
+	img_to_save[x] = results
 	end_time = time.time()
-	print("time thus far: " + str(end_time - start_time) + ", ETA: " + (x_train.shape[2] * (end_time - start_time) / (x + 1.0)))
+	print("time thus far: " + str(end_time - start_time) + ", ETA: " + str((x_train.shape[2] * (end_time - start_time) / (x + 1.0))))
 
 #print("Image to save:")
 #print(img_to_save)
