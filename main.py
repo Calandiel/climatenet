@@ -21,7 +21,7 @@ inps = os.listdir("./training_data_inputs")
 labels = os.listdir("./training_data_labels")
 data = set(inps) & set(labels)
 
-koppens = [
+koppens = np.array([
 	[255, 255, 255],
 	[0, 0, 255],
 	[0, 120, 255],
@@ -50,7 +50,7 @@ koppens = [
 	[0, 125, 125],
 	[178, 178, 178],
 	[102, 102, 102]
-]
+])
 
 x_train = []
 y_train = []
@@ -209,7 +209,7 @@ print("--- model fit ---")
 gen = DataGenerator(100, x_train, y_train)
 history = model.fit(
 	gen,
-	epochs=200,
+	epochs=10,
 	workers=10
 )
 
@@ -223,16 +223,10 @@ for x in range(0, x_train.shape[2]):
 	for y in range(0, x_train.shape[1]):
 		prediction_data = np.array([get_sub_array(0, x, y, x_train)])
 		cc = model.predict(prediction_data)
-		best = koppens[0]
-		best_w = -1
-		for k in range(0, len(koppens)):
-			v = cc[0, k]
-			if v > best_w:
-				best = koppens[k]
-				best_w = v
-		img_to_save[y, x, 0] = best[0] / 255.0
-		img_to_save[y, x, 1] = best[1] / 255.0
-		img_to_save[y, x, 2] = best[2] / 255.0
+		best = koppens[np.argmax(cc[0])] / 255.0
+		img_to_save[y, x] = best
+	end_time = time.time()
+	print("time thus far: " + str(end_time - start_time) + ", ETA: " + (x_train.shape[2] * (end_time - start_time) / (x + 1.0)))
 
 #print("Image to save:")
 #print(img_to_save)
