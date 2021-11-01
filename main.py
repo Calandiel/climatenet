@@ -5,6 +5,7 @@ import tensorflow as tf
 import numpy as np
 import sys
 import time
+import random
 from tensorflow.keras.preprocessing.image import load_img,img_to_array
 from tensorflow.keras import layers
 
@@ -111,55 +112,114 @@ y_train = np.array(y_train)
 #print(x_train[0].shape)
 #print(y_train[0].shape)
 
-tensor = tf.constant(0, shape=(400, 800, len(koppens)))
-def resize_like(input_tensor, ref_tensor): # resizes input tensor wrt. ref_tensor
-	H, W = ref_tensor.get_shape()[0], ref_tensor.get_shape()[1]
-	return tf.image.resize(input_tensor, [H, W], method="nearest")
+dd = 66 * 2 + 1
+class DataGenerator(tf.keras.utils.Sequence):
+	def __init__(self, batch_size, x_s, y_s, *args, **kwargs):
+		self.batch_size = batch_size
+		self.x_data = x_s
+		self.y_data = y_s
+
+	def __len__(self):
+		return 1 # int(np.floor(self.x_data.shape[0] / self.batch_size))
+
+	def __getitem__(self, index):
+		x = np.array([np.zeros((dd, dd, 6)) for o in range(0, self.batch_size)])
+		y = np.array([np.zeros((len(koppens))) for o in range(0, self.batch_size)])
+
+		for o in range(0, self.batch_size):
+			ni = random.randint(0, self.x_data.shape[0] - 1) # index of the image from which we're copying data
+			xin = random.randint(0, self.x_data.shape[2] - 1)  # x of the pixel we're looking at
+			yin = random.randint(0, self.x_data.shape[1] - 1)  # y of the pixel we're looking at
+
+			dim = int((dd - 1) / 2)
+			for xx in range(-dim, dim+1):
+				loc_x = xin + xx
+				# Bound check. Loop x around
+				loc_x = loc_x % self.x_data.shape[2]
+				for yy in range(-dim, dim+1):
+					loc_y = yin + yy
+					# Bound check. Do not do anything with points that are out of bounds
+					if loc_y >= self.x_data.shape[1]:
+						continue
+					if loc_y < 0:
+						continue
+					# Copy data
+					for i in range(0, 6):
+						x[o, xx, yy, i] = self.x_data[ni, loc_y, loc_x, i]
+			for i in range(0, 6):
+				y[o, i] = self.y_data[ni, yin, xin, i]
+
+		return x, y
+
+	def on_epoch_end(self):
+		pass
 
 model = tf.keras.models.Sequential()
-model.add(tf.keras.Input(shape=(400, 800, 6,)))
-model.add(layers.Conv2D(32, kernel_size=(4, 4), activation='relu'))
-model.add(layers.Conv2D(len(koppens), kernel_size=(4, 4), activation='relu'))
-model.add(layers.Conv2D(len(koppens), kernel_size=(3, 3), activation='relu'))
-model.add(layers.Lambda(resize_like, output_shape=(400, 800, len(koppens)), arguments={'ref_tensor': tensor}))
+model.add(tf.keras.Input(shape=(dd, dd, 6)))
+model.add(layers.Conv2D(16, kernel_size=(2, 2), activation='relu'))
+model.add(layers.Conv2D(8, kernel_size=(3, 3), strides=(2, 2), activation='relu'))
+model.add(layers.Conv2D(8, kernel_size=(3, 3), strides=(2, 2), activation='relu'))
+model.add(layers.Conv2D(8, kernel_size=(3, 3), strides=(2, 2), activation='relu'))
+model.add(layers.Flatten())
+model.add(layers.Dense(len(koppens)))
 
 print("--- compiling the model ---")
 model.compile(
 	optimizer="adam",
-	loss="mean_squared_error",
-	metrics=["mean_absolute_error"]
+	loss=tf.keras.losses.CategoricalCrossentropy(),
+	metrics=["mean_absolute_error", "accuracy"]
 )
 model.summary()
 
 print("--- model fit ---")
+gen = DataGenerator(100, x_train, y_train)
 history = model.fit(
-	x_train,
-	y_train,
-	batch_size=1,
-	epochs=500
+	gen,
+	epochs=2,
+	workers=10
 )
 
 print("--- model predict ---")
-result = model.predict(np.array([x_train[0]]))
-#print("Result:")
-#print(result)
-#print(result.shape)
-img_to_save = np.zeros((result.shape[1], result.shape[2], 3))
-for x in range(0, result.shape[2]):
-	for y in range(0, result.shape[1]):
+start_time = time.time()
+# ID of the image in x_train that we want to export. 0 stands for Earth
+image_id = 0
+img_to_save = np.zeros((x_train.shape[2], x_train.shape[1], 3))
+for x in range(0, x_train.shape[2]):
+	for y in range(0, x_train.shape[1]):
+		prediction_data = np.array([ np.zeros((dd, dd, 6)) ])
+		dim = int((dd - 1) / 2)
+		for xx in range(-dim, dim+1):
+			loc_x = x + xx
+			# Bound check. Loop x around
+			loc_x = loc_x % x_train.shape[2]
+			for yy in range(-dim, dim+1):
+				loc_y = y + yy
+				# Bound check. Do not do anything with points that are out of bounds
+				if loc_y >= x_train.shape[1]:
+					continue
+				if loc_y < 0:
+					continue
+				# Copy data
+				for i in range(0, 6):
+					prediction_data[0, xx, yy, i] = x_train[image_id, loc_y, loc_x, i]
+
 		best = koppens[0]
 		best_w = -1
+		cc = model.predict(prediction_data)
 		for k in range(0, len(koppens)):
-			v = result[0, y, x, k]
+			v = cc[0, k]
 			if v > best_w:
 				best = koppens[k]
 				best_w = v
 		img_to_save[y, x, 0] = best[0] / 255.0
 		img_to_save[y, x, 1] = best[1] / 255.0
 		img_to_save[y, x, 2] = best[2] / 255.0
+
 #print("Image to save:")
 #print(img_to_save)
 #print(img_to_save.shape)
 plt.imsave("export.png", img_to_save)
+end_time = time.time()
+print("Time to predict and save to file: " + str(end_time - start_time))
 
 print("--- all done ---")
