@@ -141,9 +141,9 @@ history = model.fit(
 
 print("--- model predict ---")
 result = model.predict(np.array([x_train[0]]))
-print("Result:")
-print(result)
-print(result.shape)
+#print("Result:")
+#print(result)
+#print(result.shape)
 img_to_save = np.zeros((result.shape[1], result.shape[2], 3))
 for x in range(0, result.shape[2]):
 	for y in range(0, result.shape[1]):
@@ -157,9 +157,9 @@ for x in range(0, result.shape[2]):
 		img_to_save[y, x, 0] = best[0] / 255.0
 		img_to_save[y, x, 1] = best[1] / 255.0
 		img_to_save[y, x, 2] = best[2] / 255.0
-print("Image to save:")
-print(img_to_save)
-print(img_to_save.shape)
+#print("Image to save:")
+#print(img_to_save)
+#print(img_to_save.shape)
 plt.imsave("export.png", img_to_save)
 
 print("--- all done ---")
