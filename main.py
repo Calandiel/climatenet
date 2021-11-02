@@ -226,9 +226,10 @@ def map_func(ii):
 	prediction_data = np.array([get_sub_array(0, x, ii, x_train)])
 	cc = model.predict(prediction_data)
 	return koppens[np.argmax(cc[0])] / 255.0
+indices_for_map = np.array(range(x_train.shape[1]))
 for x in range(x_train.shape[2]):
 	print("X>"+str(x))
-	results = np.array(pool.map(map_func, np.array(range(x_train.shape[1]))))
+	results = np.array(pool.map(map_func, indices_for_map))
 	img_to_save[x] = results
 	end_time = time.time()
 	print("time thus far: " + str(end_time - start_time) + ", ETA: " + str((x_train.shape[2] * (end_time - start_time) / (x + 1.0))))
