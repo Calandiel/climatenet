@@ -10,8 +10,6 @@ from tensorflow.keras.preprocessing.image import load_img,img_to_array
 from tensorflow.keras import layers
 from multiprocessing.dummy import Pool as ThreadPool
 
-
-
 print('Python version: %s' % sys.version)
 print('TensorFlow version: %s' % tf.__version__)
 print('Keras version: %s' % tf.keras.__version__)
@@ -24,6 +22,10 @@ inps = os.listdir("./training_data_inputs")
 labels = os.listdir("./training_data_labels")
 data = set(inps) & set(labels)
 
+xdim = 180
+ydim = 90
+padding = 9
+dd = 1 + padding * 2
 koppens = np.array([
 	[255, 255, 255],
 	[0, 0, 255],
@@ -101,6 +103,9 @@ for a in data:
 				raise Exception("NO PIXEL SEEMS TO BE A CLOSE FIT FOR PIXEL: " + str(x) + ", " + str(y) + " IN: " + str(a) + " WITH COLOR: " + str(l))
 			label_data[y, x, index] = 1
 
+	input_data = np.pad(input_data, ((padding, padding), (0, 0), (0, 0)), 'constant', constant_values=(0, 0))
+	input_data=np.pad(input_data, ((0, 0), (padding, padding), (0, 0)), 'wrap')
+
 	x_train.append(input_data)
 	y_train.append(label_data)
 
@@ -112,133 +117,108 @@ print("Image loaded!")
 
 x_train = np.array(x_train)
 y_train = np.array(y_train)
-#print(x_train[0].shape)
-#print(y_train[0].shape)
-
-dd = 66 * 2 + 1
+print(x_train[0].shape)
+print(y_train[0].shape)
 
 def get_sub_array(ni, xin, yin, slices_of_data):
-	dim = int((dd - 1) / 2)
-	low_x = xin - dim
-	high_x = xin + dim
-	low_y = yin - dim
-	high_y = yin + dim
-
-	top_right_x_low = 0
-	top_right_x_high = 0
-	top_left_x_low = 0
-	top_left_x_high = 0
-	if low_x < 0:
-		top_left_x_low = low_x % slices_of_data.shape[2]
-		top_left_x_high = slices_of_data.shape[2] + 1
-		top_right_x_low = 0
-		top_right_x_high = high_x + 1
-	elif high_x >= slices_of_data.shape[2]:
-		top_left_x_low = low_x
-		top_left_x_high = slices_of_data.shape[2] + 1
-		top_right_x_low = 0
-		top_right_x_high = 1 + (high_x % slices_of_data.shape[2])
-	else:
-		top_right_x_low = low_x
-		top_right_x_high = high_x + 1
-
-	down_zeros_size = 0
-	up_zeros_size = 0
-	if low_y < 0:
-		down_zeros_size = abs(low_y)
-		low_y = 0
-		high_y = high_y + 1
-	elif high_y >= slices_of_data.shape[1]:
-		up_zeros_size = 1 + high_y - slices_of_data.shape[1]
-		high_y = slices_of_data.shape[1] + 1
-	else:
-		high_y = high_y + 1
-
-	left_part = slices_of_data[ni, low_y:high_y, top_left_x_low:top_left_x_high, :]
-	right_part = slices_of_data[ni, low_y:high_y, top_right_x_low:top_right_x_high, :]
-	combined = np.concatenate((left_part, right_part), axis=1)
-	combined = np.concatenate((
-		np.zeros((down_zeros_size, dd, 6)),
-		combined,
-		np.zeros((up_zeros_size, dd, 6))
-		), axis=0)
-	return combined
-
+	return slices_of_data[ni, yin:yin+2*padding+1, xin:xin+2*padding+1, :]
+# For training
 class DataGenerator(tf.keras.utils.Sequence):
 	def __init__(self, batch_size, x_s, y_s, *args, **kwargs):
 		self.batch_size = batch_size
 		self.x_data = x_s
 		self.y_data = y_s
+		self.indices = np.array(range(xdim*ydim))
+		np.random.shuffle(self.indices)
 
 	def __len__(self):
-		return 100 # int(np.floor(self.x_data.shape[0] / self.batch_size))
+		return int(np.floor(self.x_data.shape[0] * xdim *ydim / self.batch_size))
 
 	def __getitem__(self, index):
+		ni = int(index * self.batch_size) // (xdim * ydim)
 		x = np.array([np.zeros((dd, dd, 6)) for o in range(self.batch_size)])
 		y = np.array([np.zeros((len(koppens))) for o in range(self.batch_size)])
 
 		for o in range(self.batch_size):
-			ni = random.randint(0, self.x_data.shape[0] - 1) # index of the image from which we're copying data
-			xin = random.randint(0, self.x_data.shape[2] - 1)  # x of the pixel we're looking at
-			yin = random.randint(0, self.x_data.shape[1] - 1)  # y of the pixel we're looking at
+			ii = ni * self.batch_size + o
+			ii = self.indices[ii]
+			xin = ii % xdim
+			yin = ii // xdim
 
-			x[o] = get_sub_array(ni, xin, yin, self.x_data)
+			#ni = random.randint(0, self.x_data.shape[0] - 1) # index of the image from which we're copying data
+			#xin = random.randint(0, xdim - 1)  # x of the pixel we're looking at, -1 is here because of inclusivity of randint
+			#yin = random.randint(0, ydim - 1)  # y of the pixel we're looking at, -1 is here because of inclusivity of randint
+			ooo = get_sub_array(ni, xin, yin, self.x_data)
+			x[o] = ooo
 			for i in range(len(koppens)):
 				y[o, i] = self.y_data[ni, yin, xin, i]
 
 		return x, y
 
 	def on_epoch_end(self):
+		np.random.shuffle(self.indices)
+# For predicting
+class DataProvider(tf.keras.utils.Sequence):
+	def __init__(self, x_s, ni, batch_size, *args, **kwargs):
+		self.x_data = x_s
+		self.ni = ni
+		self.batch_size = batch_size
+
+	def __len__(self):
+		return xdim * ydim
+
+	def __getitem__(self, index):
+		index_int = int(index)
+		xin = index_int % xdim
+		yin = index_int // xdim
+
+		#print(f"{xin}, {yin}")
+		x = np.array([np.zeros((dd, dd, 6)) for o in range(self.batch_size)])
+		for o in range(self.batch_size):
+			x[o] = get_sub_array(self.ni, xin, yin, self.x_data)
+		return x
+
+	def on_epoch_end(self):
 		pass
+
 
 model = tf.keras.models.Sequential()
 model.add(tf.keras.Input(shape=(dd, dd, 6)))
-model.add(layers.Conv2D(16, kernel_size=(2, 2), activation='relu'))
-model.add(layers.Conv2D(8, kernel_size=(3, 3), strides=(2, 2), activation='sigmoid'))
-model.add(layers.Conv2D(8, kernel_size=(3, 3), strides=(2, 2), activation='sigmoid'))
-model.add(layers.Conv2D(8, kernel_size=(3, 3), strides=(2, 2), activation='sigmoid'))
+#model.add(layers.Conv2D(8, kernel_size=(3, 3), activation='sigmoid'))
 model.add(layers.Flatten())
+model.add(layers.Dense(30, activation="relu"))
+model.add(layers.Dense(50, activation="relu"))
+model.add(layers.Dropout(0.2))
 model.add(layers.Dense(len(koppens), activation='softmax'))
 
 print("--- compiling the model ---")
 model.compile(
-	optimizer="adam",
-	loss=tf.keras.losses.CategoricalCrossentropy(),
-	metrics=["mean_absolute_error", "accuracy"]
+	optimizer='adadelta',
+		loss='categorical_crossentropy',
+	metrics=["mean_squared_error", "categorical_accuracy"]
 )
 model.summary()
 
 print("--- model fit ---")
-gen = DataGenerator(100, x_train, y_train)
+gen = DataGenerator(1, x_train, y_train)
 history = model.fit(
 	gen,
-	epochs=100,
+	epochs=3500,
 	workers=10
 )
 
 print("--- model predict ---")
-start_time = time.time()
 # ID of the image in x_train that we want to export. 0 stands for Earth
 image_id = 0
-img_to_save = np.zeros((x_train.shape[2], x_train.shape[1], 3))
-pool = ThreadPool(10)
-def map_func(ii):
-	prediction_data = np.array([get_sub_array(0, x, ii, x_train)])
-	cc = model.predict(prediction_data)
-	return koppens[np.argmax(cc[0])] / 255.0
-indices_for_map = np.array(range(x_train.shape[1]))
-for x in range(x_train.shape[2]):
-	print("X>"+str(x))
-	results = np.array(pool.map(map_func, indices_for_map))
-	img_to_save[x] = results
-	end_time = time.time()
-	print("time thus far: " + str(end_time - start_time) + ", ETA: " + str((x_train.shape[2] * (end_time - start_time) / (x + 1.0))))
-
-#print("Image to save:")
-#print(img_to_save)
-#print(img_to_save.shape)
+img_to_save = np.zeros((ydim, xdim, 3))
+gen = DataProvider(x_train, image_id, 80)
+results = model.predict(gen, workers=10, verbose=1)
+ii = 0
+for x in range(xdim):
+	for y in range(ydim):
+		#print(results[ii])
+		img_to_save[y, x] = koppens[np.argmax(results[ii])] / 255.0
+		ii = ii + 1
 plt.imsave("export.png", img_to_save)
-end_time = time.time()
-print("Time to predict and save to file: " + str(end_time - start_time))
 
 print("--- all done ---")
