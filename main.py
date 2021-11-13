@@ -142,6 +142,7 @@ for a in data:
 	end_time = time.time()
 	print(str(a) + ": " + str(end_time - start_time) + "s")
 
+"""
 # Calculate weights
 total = 28.0
 for i in y_train[0]:
@@ -150,13 +151,14 @@ for i in y_train[0]:
 		total = total + 1.0
 for i in range(28):
 	koppens_weights[i] = total / koppens_weights[i]
-
+"""
 print("Image loaded!")
 
 x_train = np.array(x_train)
 y_train = np.array(y_train)
 print(x_train[0].shape)
 print(y_train[0].shape)
+print(y_train)
 
 def get_sub_array(ni, xin, yin, slices_of_data):
 	return slices_of_data[ni, yin:yin+2*padding+1, xin:xin+2*padding+1, :]
@@ -166,35 +168,31 @@ class DataGenerator(tf.keras.utils.Sequence):
 		self.batch_size = batch_size
 		self.x_data = x_s
 		self.y_data = y_s
-		self.indices = np.array(range(xdim*ydim))
-		np.random.shuffle(self.indices)
 
 	def __len__(self):
-		return int(np.floor(self.x_data.shape[0] * xdim *ydim / self.batch_size))
+		return 5000
 
 	def __getitem__(self, index):
-		ni = int(index * self.batch_size) // (xdim * ydim)
 		x = np.array([np.zeros((dd, dd, 6)) for o in range(self.batch_size)])
 		y = np.array([np.zeros((len(koppens))) for o in range(self.batch_size)])
 
 		for o in range(self.batch_size):
-			ii = ni * self.batch_size + o
-			ii = self.indices[ii]
-			xin = ii % xdim
-			yin = ii // xdim
+			ni = random.randint(0, self.x_data.shape[0] - 1) # index of the image from which we're copying data
+			xin = random.randint(0, xdim - 1)  # x of the pixel we're looking at, -1 is here because of inclusivity of randint
+			yin = random.randint(0, ydim - 1)  # y of the pixel we're looking at, -1 is here because of inclusivity of randint
 
-			#ni = random.randint(0, self.x_data.shape[0] - 1) # index of the image from which we're copying data
-			#xin = random.randint(0, xdim - 1)  # x of the pixel we're looking at, -1 is here because of inclusivity of randint
-			#yin = random.randint(0, ydim - 1)  # y of the pixel we're looking at, -1 is here because of inclusivity of randint
+			# Reroll water tiles
+			while self.y_data[ni, yin, xin, 0] == 1 or self.x_data[ni, padding + yin, padding + xin, 0] == 1 or self.x_data[ni, padding + yin, padding + xin, 1] == 1 or self.x_data[ni, padding + yin, padding + xin, 2] == 1:
+				ni = random.randint(0, self.x_data.shape[0] - 1) # index of the image from which we're copying data
+				xin = random.randint(0, xdim - 1)  # x of the pixel we're looking at, -1 is here because of inclusivity of randint
+				yin = random.randint(0, ydim - 1)  # y of the pixel we're looking at, -1 is here because of inclusivity of randint
+
 			ooo = get_sub_array(ni, xin, yin, self.x_data)
 			x[o] = ooo
 			for i in range(len(koppens)):
 				y[o, i] = self.y_data[ni, yin, xin, i]
 
 		return x, y
-
-	def on_epoch_end(self):
-		np.random.shuffle(self.indices)
 # For predicting
 class DataProvider(tf.keras.utils.Sequence):
 	def __init__(self, x_s, ni, batch_size, *args, **kwargs):
@@ -210,7 +208,6 @@ class DataProvider(tf.keras.utils.Sequence):
 		xin = index_int % xdim
 		yin = index_int // xdim
 
-		#print(f"{xin}, {yin}")
 		x = np.array([np.zeros((dd, dd, 6)) for o in range(self.batch_size)])
 		for o in range(self.batch_size):
 			x[o] = get_sub_array(self.ni, xin, yin, self.x_data)
@@ -222,9 +219,7 @@ class DataProvider(tf.keras.utils.Sequence):
 
 model = tf.keras.models.Sequential()
 model.add(tf.keras.Input(shape=(dd, dd, 6)))
-#model.add(layers.Conv2D(8, kernel_size=(3, 3), activation='sigmoid'))
 model.add(layers.Flatten())
-#layers.Dropout(0.2)
 model.add(layers.Dense(30, activation="relu"))
 model.add(layers.Dropout(0.2))
 model.add(layers.Dense(30, activation="relu"))
@@ -235,15 +230,15 @@ print("--- compiling the model ---")
 model.compile(
 	optimizer='adam',#tf.keras.optimizers.SGD(learning_rate=0.0001),
 		loss='categorical_crossentropy',
-	metrics=["mean_squared_error", "categorical_accuracy"]
+	metrics=["mean_squared_error", "categorical_accuracy", "accuracy"]
 )
 model.summary()
 
 print("--- model fit ---")
-gen = DataGenerator(int(xdim*ydim/8.0), x_train, y_train)
+gen = DataGenerator(50, x_train, y_train)
 history = model.fit(
 	gen,
-	epochs=6400,
+	epochs=25,
 	workers=10,
 	class_weight=koppens_weights
 )
@@ -257,8 +252,11 @@ results = model.predict(gen, workers=10, verbose=1)
 ii = 0
 for x in range(xdim):
 	for y in range(ydim):
-		#print(results[ii])
-		img_to_save[y, x] = koppens[np.argmax(results[ii])] / 255.0
+		# Skip water tiles, assing water to them by default
+		if x_train[image_id, padding + y, padding + x, 0] == 1 or x_train[image_id, padding + y, padding + x, 1] == 1 or x_train[image_id, padding + y, padding + x, 2] == 1:
+			img_to_save[y, x] = koppens[0] / 255.0
+		else:
+			img_to_save[y, x] = koppens[np.argmax(results[ii])] / 255.0
 		ii = ii + 1
 plt.imsave("export.png", img_to_save)
 
