@@ -56,6 +56,36 @@ koppens = np.array([
 	[178, 178, 178],
 	[102, 102, 102]
 ])
+koppens_weights = {
+	0: 1., # water
+	1: 1., # jungle
+	2: 1., # monsoon
+	3: 1., # savannah
+	4: 1.,
+	5: 1.,
+	6: 1.,
+	7: 1.,
+	8: 1.,
+	9: 1.,
+	10: 1.,
+	11: 1.,
+	12: 1.,
+	13: 1.,
+	14: 1.,
+	15: 1.,
+	16: 1.,
+	17: 1.,
+	18: 1.,
+	19: 1.,
+	20: 1.,
+	21: 1.,
+	22: 1.,
+	23: 1.,
+	24: 1.,
+	25: 1.,
+	26: 1.,
+	27: 1.,
+}
 
 x_train = []
 y_train = []
@@ -112,6 +142,14 @@ for a in data:
 	end_time = time.time()
 	print(str(a) + ": " + str(end_time - start_time) + "s")
 
+# Calculate weights
+total = 28.0
+for i in y_train[0]:
+	for j in i:
+		koppens_weights[np.argmax(j)] = koppens_weights[np.argmax(j)] + 1
+		total = total + 1.0
+for i in range(28):
+	koppens_weights[i] = total / koppens_weights[i]
 
 print("Image loaded!")
 
@@ -186,25 +224,28 @@ model = tf.keras.models.Sequential()
 model.add(tf.keras.Input(shape=(dd, dd, 6)))
 #model.add(layers.Conv2D(8, kernel_size=(3, 3), activation='sigmoid'))
 model.add(layers.Flatten())
+#layers.Dropout(0.2)
 model.add(layers.Dense(30, activation="relu"))
-model.add(layers.Dense(50, activation="relu"))
+model.add(layers.Dropout(0.2))
+model.add(layers.Dense(30, activation="relu"))
 model.add(layers.Dropout(0.2))
 model.add(layers.Dense(len(koppens), activation='softmax'))
 
 print("--- compiling the model ---")
 model.compile(
-	optimizer='adadelta',
+	optimizer='adam',#tf.keras.optimizers.SGD(learning_rate=0.0001),
 		loss='categorical_crossentropy',
 	metrics=["mean_squared_error", "categorical_accuracy"]
 )
 model.summary()
 
 print("--- model fit ---")
-gen = DataGenerator(1, x_train, y_train)
+gen = DataGenerator(int(xdim*ydim/8.0), x_train, y_train)
 history = model.fit(
 	gen,
-	epochs=3500,
-	workers=10
+	epochs=6400,
+	workers=10,
+	class_weight=koppens_weights
 )
 
 print("--- model predict ---")
